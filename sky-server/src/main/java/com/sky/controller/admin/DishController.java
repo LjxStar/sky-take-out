@@ -26,6 +26,7 @@ public class DishController {
     @PostMapping
     @ApiOperation(value = "新增菜品")
     public Result save(@RequestBody DishDTO dishDTO) {
+        log.info("新增菜品：{}", dishDTO);
         dishService.save(dishDTO);
         return Result.success();
     }
@@ -33,6 +34,7 @@ public class DishController {
     @GetMapping("/page")
     @ApiOperation(value = "菜品分页查询")
     public Result page(DishPageQueryDTO dishPageQueryDTO) {
+        log.info("菜品分页查询：{}", dishPageQueryDTO);
         PageResult pageResult = dishService.page(dishPageQueryDTO);
         return Result.success(pageResult);
     }
@@ -40,6 +42,7 @@ public class DishController {
     @DeleteMapping
     @ApiOperation(value = "删除菜品")
     public Result delete(@RequestParam List<Long> ids) {
+        log.info("删除菜品：{}", ids);
         dishService.delete(ids);
         return Result.success();
     }
@@ -47,13 +50,15 @@ public class DishController {
     @PostMapping("/status/{status}")
     @ApiOperation(value= "起售和停售菜品")
     public Result startOrStop(@PathVariable Integer status, @RequestParam Long id) {
+        log.info("起售和停售菜品：{}, {}", status, id);
         dishService.startOrStop(status, id);
         return Result.success();
     }
 
     @GetMapping("/{id}")
     @ApiOperation(value = "根据id查询菜品")
-    public Result getById(@PathVariable Long id) {
+    public Result<DishVO> getById(@PathVariable Long id) {
+        log.info("根据id查询菜品：{}", id);
         DishVO dishVO = dishService.getById(id);
         return Result.success(dishVO);
     }
@@ -61,7 +66,16 @@ public class DishController {
     @PutMapping
     @ApiOperation(value = "修改菜品")
     public Result update(@RequestBody DishDTO dishDTO) {
+        log.info("修改菜品：{}", dishDTO);
         dishService.update(dishDTO);
         return Result.success();
+    }
+
+    @GetMapping("/list")
+    @ApiOperation(value = "根据分类条件查询菜品列表")
+    public Result<List<DishVO>> list(Long categoryId) {
+        log.info("根据分类条件查询菜品列表：{}", categoryId);
+        List<DishVO> dishVOList = dishService.list(categoryId);
+        return Result.success(dishVOList);
     }
 }
