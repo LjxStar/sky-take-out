@@ -2,14 +2,12 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.sky.anonotation.AutoFill;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.DishFlavor;
-import com.sky.enumeration.OperationType;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.DishFlavorMapper;
 import com.sky.mapper.DishMapper;
@@ -21,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -38,6 +37,7 @@ public class DishServiceImpl implements DishService {
      * 新增菜品
      * @param dishDTO
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void save(DishDTO dishDTO) {
         // 创建 Dish 对象
@@ -70,6 +70,7 @@ public class DishServiceImpl implements DishService {
         return new PageResult(page.getTotal(), page.getResult());
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<Long> ids) {
         // 判断当前菜品是否起售状态
@@ -103,6 +104,7 @@ public class DishServiceImpl implements DishService {
         dishMapper.update(dish);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public DishVO getById(Long id) {
         DishVO dishVO = new DishVO();
@@ -118,6 +120,7 @@ public class DishServiceImpl implements DishService {
         return dishVO;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(DishDTO dishDTO) {
         // 创建 Dish 对象

@@ -30,12 +30,8 @@
             <if test="status != null">
                 status = #{status},
             </if>
-            <if test="updateTime != null">
-                update_time = #{updateTime},
-            </if>
-            <if test="updateUser != null">
-                update_user = #{updateUser},
-            </if>
+            update_time = #{updateTime},
+            update_user = #{updateUser}
         </set>
         where id = #{id}
     </update>
@@ -46,7 +42,7 @@
         </foreach>
     </delete>
     <select id="pageQuery" resultType="com.sky.vo.DishVO">
-        select d.* , c.name as categoryName from dish d left outer join category c on d.category_id = c.id
+        select d.* , c.name as categoryName from dish d left join category c on d.category_id = c.id
         <where>
             <if test="name != null">
                 and d.name like concat('%',#{name},'%')
