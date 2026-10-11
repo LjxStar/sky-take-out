@@ -9,6 +9,8 @@ import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
 import com.sky.exception.DeletionNotAllowedException;
+import com.sky.exception.SetmealEnableFailedException;
+import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -29,6 +32,9 @@ public class SetmealServiceImpl implements SetmealService {
     private SetmealMapper setmealMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+    @Autowired
+    private DishMapper dishMapper;
+
 
     /**
      * 新增套餐
@@ -78,7 +84,7 @@ public class SetmealServiceImpl implements SetmealService {
         for  (Long id : ids) {
             Setmeal setmeal = setmealMapper.getById(id);
             if (setmeal.getStatus().equals(StatusConstant.ENABLE)) {
-                throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
+                throw new DeletionNotAllowedException(MessageConstant.SETMEAL_ON_SALE);
             }
         }
 
@@ -124,6 +130,16 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Override
     public void startOrStop(Integer status, Long id) {
+        if (status == StatusConstant.ENABLE) {
+            List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(id);
+            if (setmealDishes != null && !setmealDishes.isEmpty()) {
+                for (SetmealDish setmealDish : setmealDishes) {
+                    if (dishMapper.getById(setmealDish.getDishId()).getStatus().equals(StatusConstant.DISABLE)) {
+                        throw new SetmealEnableFailedException(MessageConstant.SETMEAL_ENABLE_FAILED);
+                    }
+                }
+            }
+        }
         Setmeal setmeal = Setmeal.builder()
                 .id(id)
                 .status(status)

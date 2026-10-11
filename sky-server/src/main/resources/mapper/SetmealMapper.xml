@@ -50,6 +50,8 @@
             <if test="status != null">
                 and s.status = #{status}
             </if>
+            c.status = 1
         </where>
+        order by s.create_time desc
     </select>
 </mapper>
