@@ -10,3 +10,9 @@ sky:
   alioss:
     endpoint: oss-cn-beijing.aliyuncs.com
     bucket-name: sky-take-out-ljxstar
+
+  redis:
+    host: localhost
+    port: 6379
+    password: 131452
+    database: 7
