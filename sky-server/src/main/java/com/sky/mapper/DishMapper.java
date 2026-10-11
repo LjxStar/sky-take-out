@@ -62,5 +62,5 @@ public interface DishMapper {
      * @param dish
      * @return
      */
-    List<DishVO> list(Dish dish);
+    List<Dish> list(Dish dish);
 }
