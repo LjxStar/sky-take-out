@@ -18,11 +18,15 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -33,6 +37,8 @@ public class DishServiceImpl implements DishService {
     private DishFlavorMapper dishFlavorMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 新增菜品
@@ -57,6 +63,10 @@ public class DishServiceImpl implements DishService {
             dishFlavors.forEach(dishFlavor -> dishFlavor.setDishId(id));
             dishFlavorMapper.insertBatch(dishFlavors);
         }
+
+        // 清理缓存数据
+        String key = "dish_" + dish.getCategoryId();
+        cleanCache(key);
     }
 
     /**
@@ -74,12 +84,16 @@ public class DishServiceImpl implements DishService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<Long> ids) {
+        // 记录菜品的分类id
+        Set<Long> categoryIds = new HashSet<>();
+
         // 判断当前菜品是否起售状态
         for (Long id : ids) {
             Dish dish = dishMapper.getById(id);
             if (dish.getStatus() == StatusConstant.ENABLE) {
                 throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
             }
+            categoryIds.add(dish.getCategoryId());
         }
 
         // 判断当前菜品是否关联套餐
@@ -93,16 +107,29 @@ public class DishServiceImpl implements DishService {
         // 删除菜品和口味
         dishMapper.delete(ids);
         dishFlavorMapper.deleteByDishIds(ids);
+
+        // 清理缓存数据
+        for (Long cid : categoryIds) {
+            String key = "dish_" + cid;
+            cleanCache(key);
+        }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void startOrStop(Integer status, Long id) {
+        // 根据id修改菜品状态
         Dish dish = Dish.builder()
                 .id(id)
                 .status(status)
                 .build();
 
         dishMapper.update(dish);
+
+        // 清理缓存数据
+        Dish updatedDish = dishMapper.getById(id);
+        String key = "dish_" + updatedDish.getCategoryId();
+        cleanCache(key);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -124,6 +151,9 @@ public class DishServiceImpl implements DishService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void update(DishDTO dishDTO) {
+        // 获取更新前的菜品信息
+        Dish oldDish = dishMapper.getById(dishDTO.getId());
+
         // 创建 Dish 对象
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO, dish);
@@ -140,6 +170,15 @@ public class DishServiceImpl implements DishService {
             dishFlavors.forEach(dishFlavor -> dishFlavor.setDishId(dishDTO.getId()));
             dishFlavorMapper.insertBatch(dishFlavors);
         }
+
+        // 清理缓存数据
+        String oldKey = "dish_" + oldDish.getCategoryId();
+        cleanCache(oldKey);
+        String newKey = "dish_" + dish.getCategoryId();
+        if (oldKey.equals(newKey)) {
+            cleanCache(newKey);
+        }
+
     }
 
     /**
@@ -158,11 +197,21 @@ public class DishServiceImpl implements DishService {
 
     /**
      * 条件查询菜品和口味
-     * @param dish
+     * @param categoryId
      * @return
      */
     public List<DishVO> listWithFlavor(long categoryId) {
-        // 根据分类id和状态查询菜品列表
+        // 1.构造redis中的key
+        String key = "dish_" + categoryId;
+
+        // 2.从redis中查询缓存数据, 如果缓存命中，直接返回
+        List<DishVO> cache = (List<DishVO>) redisTemplate.opsForValue().get(key);
+        if (cache != null && !cache.isEmpty()) {
+            return cache;
+        }
+
+        // 3.如果缓存未命中，查询数据库
+        // 构建查询条件对象
         Dish dish = Dish.builder()
                 .categoryId(categoryId)
                 .status(StatusConstant.ENABLE)
@@ -184,6 +233,18 @@ public class DishServiceImpl implements DishService {
             dishVOList.add(dishVO);
         }
 
+        // 4.将查询结果缓存到redis中
+        redisTemplate.opsForValue().set(key, dishVOList,30, TimeUnit.MINUTES);
+
         return dishVOList;
+    }
+
+    /**
+     * 清理缓存数据
+     * @param pattern
+     */
+    private void cleanCache(String pattern){
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
     }
 }
