@@ -20,3 +20,10 @@ sky:
   wechat:
     appid: wx9d30982ab4d570d7
     secret: 68b42fc701f09bc55522aede5f46a9d4
+    mchid: null # 商务号
+    mchSerialNo: null # 商户 API 证书序列号
+    privateKeyFilePath: null # 商户私钥文件路径 （私钥）
+    apiV3Key: null # APIv3 密钥（32 位）
+    weChatPayCertFilePath: null # 微信支付平台证书文件路径 （公钥）
+    notifyUrl: https://c638cff.r9.vip.cpolar.cn/notify/paySuccess # 支付结果回调地址
+    refundNotifyUrl: https://c638cff.r9.vip.cpolar.cn/notify/refundSuccess # 退款结果回调地址
