@@ -40,4 +40,28 @@
         </set>
         where id = #{id}
     </update>
+
+    <select id="pageQuery" resultType="com.sky.entity.Orders">
+        select * from orders
+        <where>
+            <if test="number != null and number != ''">
+                number like concat('%',#{number},'%')
+            </if>
+            <if test="phone != null and phone != ''">
+                phone like concat('%',#{phone},'%')
+            </if>
+            <if test="status != null">
+                status = #{status}
+            </if>
+            <if test="beginTime != null and endTime != null">
+                order_time between #{beginTime} and #{endTime}
+            </if>
+            <if test="userId != null">
+                user_id = #{userId}
+            </if>
+        </where>
+        order by order_time desc
+    </select>
+
+
 </mapper>
