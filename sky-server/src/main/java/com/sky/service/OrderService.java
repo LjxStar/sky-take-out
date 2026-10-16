@@ -31,7 +31,9 @@ public interface OrderService {
 
     /**
      * 订单分页查询
+     *
      * @param ordersPageQueryDTO
+     * @param b
      * @return
      */
     PageResult pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
@@ -78,4 +80,23 @@ public interface OrderService {
      * @param id
      */
     void deliveryOrder(Long id);
+
+    /**
+     * 订单查询
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    PageResult historyQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 用户取消订单
+     * @param id
+     */
+    void userCancelOrder(Long id);
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    void repetition(Long id);
 }
